@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#121820">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Breathwatch is a privacy-first breathing check. It is not a medical device. Nothing is stored or sent.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self'; media-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Breathwatch</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-level="ready">
+  <div class="lamp" aria-hidden="true"></div>
+
+  <main id="start">
+    <p class="wordmark">Breathwatch</p>
+    <h1>Stay with a breathing check. Nothing leaves this phone.</h1>
+    <div class="disclaimer">
+      <p>Breathwatch is <strong>not a medical device</strong>. It <strong>cannot call for help</strong>, text anyone, or contact emergency services on its own.</p>
+      <p>Keep the app open in the <strong>foreground</strong> with the <strong>screen on</strong>. If the screen sleeps or you leave this page, the check stops.</p>
+      <p><strong>Never use alone.</strong> Call Never Use Alone at <a class="hotline" href="tel:18004843731">1-800-484-3731</a> so a person can stay on the phone with you.</p>
+      <p>A soft chime, then a loud alarm, plays on this phone if breathing slows or a check-in goes unanswered. Sound is processed in memory only. Nothing is saved or sent.</p>
+    </div>
+    <button type="button" class="start-button" id="start-button">Start and stay here</button>
+    <p class="fine">Tap mode counts breaths you tap. Mic mode listens only while you leave it on, then releases the microphone.</p>
+  </main>
+
+  <main id="watch" hidden>
+    <div class="watch-top">
+      <div class="top-row">
+        <p class="wordmark">Breathwatch</p>
+        <p class="status-pill" id="status-pill">Listening</p>
+      </div>
+      <p class="bpm-block">
+        <span class="bpm-label" id="bpm-label">Rate</span>
+        <span class="bpm-num" id="bpm-num">—</span>
+        <span class="bpm-unit">breaths / min</span>
+      </p>
+      <div class="modes" role="group" aria-label="How breaths are counted">
+        <button type="button" id="mode-tap" aria-pressed="true">Tap</button>
+        <button type="button" id="mode-mic" aria-pressed="false">Mic</button>
+      </div>
+    </div>
+
+    <section id="stage-tap">
+      <button type="button" id="tap-button">
+        <span class="tap-ripple" aria-hidden="true"></span>
+        <span class="tap-kicker">Tap mode</span>
+        <span class="tap-label">Tap each breath</span>
+        <span class="tap-hint" id="tap-hint">The whole area is the button.</span>
+      </button>
+    </section>
+
+    <section id="stage-mic" hidden>
+      <div class="mic-wrap">
+        <p id="mic-privacy" class="fine">Mic on — this moment only, not saved.</p>
+        <p id="mic-error" class="banner" hidden></p>
+        <div id="cal-panel">
+          <p id="cal-label">Calibrating the room for 10 seconds. Breathe normally.</p>
+          <div class="cal-track" aria-hidden="true"><div id="cal-bar"></div></div>
+        </div>
+        <div class="wave-card">
+          <div class="mic-glow" id="mic-glow" data-level="0" aria-hidden="true"></div>
+          <canvas id="wave" width="640" height="180" aria-hidden="true"></canvas>
+        </div>
+        <p id="confidence" class="confidence">Confidence —</p>
+        <p id="signal-banner" class="banner" role="status" hidden>Signal low — consider moving closer or switching to Tap Mode.</p>
+        <p class="fine">Band-pass roughly 100–1000 Hz, then a loudness envelope. Raw audio is not kept.</p>
+        <button type="button" class="text-button" id="mic-back">Use Tap Mode</button>
+      </div>
+    </section>
+  </main>
+
+  <main id="checkin" hidden>
+    <p class="wordmark">Breathwatch</p>
+    <p class="bpm-block compact">
+      <span class="bpm-label" id="checkin-label">Rate</span>
+      <span class="bpm-num" id="checkin-bpm">—</span>
+      <span class="bpm-unit">breaths / min</span>
+    </p>
+    <p class="reason" id="checkin-reason"></p>
+    <button type="button" class="confirm" id="confirm-ok">Are you OK? Tap to confirm</button>
+  </main>
+
+  <main id="critical" hidden>
+    <p class="kicker" id="critical-heading" tabindex="-1">Critical</p>
+    <p class="bpm-block">
+      <span class="bpm-label" id="critical-bpm-label">Last</span>
+      <span class="bpm-num" id="critical-bpm">—</span>
+      <span class="bpm-unit">breaths / min</span>
+    </p>
+    <p class="since-block">
+      <span id="since-label">Time since last response</span>
+      <strong id="since-response">—</strong>
+    </p>
+    <p class="reason" id="critical-reason"></p>
+    <p class="alarm-state" id="alarm-state">Alarm sounding</p>
+
+    <div class="action-card">
+      <div class="call-row">
+        <a class="call call-911" href="tel:911">Call 911</a>
+        <a class="call call-hotline" href="tel:18004843731">Never Use Alone<br>1-800-484-3731</a>
+      </div>
+      <button type="button" id="im-ok">Silence / I'm OK</button>
+      <p class="fine dark">This app cannot call by itself. The buttons open your phone dialer. Works offline.</p>
+    </div>
+
+    <article class="info-card">
+      <h2>Naloxone nasal spray</h2>
+      <ol>
+        <li>Call 911.</li>
+        <li>Give one spray of naloxone in one nostril.</li>
+        <li>Give rescue breaths if they are not breathing.</li>
+        <li>If there is no response after 2–3 minutes, give a second dose.</li>
+      </ol>
+      <p>Stay with them. These are general public steps, not personal medical advice.</p>
+    </article>
+
+    <article class="info-card">
+      <h2>Recovery position</h2>
+      <svg class="recovery-svg" viewBox="0 0 640 340" role="img" aria-labelledby="rec-title rec-desc">
+        <title id="rec-title">Recovery position</title>
+        <desc id="rec-desc">A person lying on their side with the head tilted back, a hand under the cheek, and the upper knee bent forward so they cannot roll onto their face.</desc>
+        <rect x="0" y="0" width="640" height="340" fill="#fffdf8"></rect>
+        <line x1="36" y1="268" x2="604" y2="268" stroke="#c8b8a4" stroke-width="4" stroke-linecap="round"></line>
+        <circle cx="168" cy="158" r="48" fill="#ffe1c4" stroke="#24180f" stroke-width="6"></circle>
+        <path d="M198 140 C224 124 244 132 256 154" fill="none" stroke="#c43b2c" stroke-width="5" stroke-linecap="round"></path>
+        <path d="M206 186 C258 198 310 220 356 240" fill="none" stroke="#24180f" stroke-width="16" stroke-linecap="round"></path>
+        <path d="M190 196 C154 214 132 198 124 172" fill="none" stroke="#24180f" stroke-width="10" stroke-linecap="round"></path>
+        <path d="M236 204 L292 256" fill="none" stroke="#24180f" stroke-width="10" stroke-linecap="round"></path>
+        <path d="M352 234 C396 214 438 156 476 148" fill="none" stroke="#24180f" stroke-width="12" stroke-linecap="round"></path>
+        <path d="M476 148 C508 158 536 206 554 242" fill="none" stroke="#24180f" stroke-width="12" stroke-linecap="round"></path>
+        <path d="M356 250 L546 266" fill="none" stroke="#24180f" stroke-width="12" stroke-linecap="round"></path>
+        <text x="248" y="78" fill="#c43b2c" font-size="22" font-family="system-ui, sans-serif">Head tilted, airway open</text>
+        <text x="48" y="312" fill="#24180f" font-size="22" font-family="system-ui, sans-serif">Hand under cheek</text>
+        <text x="392" y="118" fill="#24180f" font-size="22" font-family="system-ui, sans-serif">Knee bent forward</text>
+      </svg>
+      <ol>
+        <li>Kneel beside them.</li>
+        <li>Put the near arm at a right angle, palm up.</li>
+        <li>Bring the far knee up and roll them toward you onto their side.</li>
+        <li>Tilt the head back so the mouth points toward the floor and the airway stays open.</li>
+        <li>Stay and watch breathing until help takes over.</li>
+      </ol>
+    </article>
+  </main>
+
+  <div id="notices">
+    <p id="wake-note" class="fine notice" hidden>This browser did not keep the screen awake. Keep the screen on yourself.</p>
+    <p id="audio-note" class="fine notice" hidden>This browser did not start audio. Colors and the check-in still work.</p>
+  </div>
+  <p id="live" class="sr-only" aria-live="assertive"></p>
+  <noscript>
+    <p>Breathwatch needs JavaScript for the timer and microphone. It still does not connect to a server.</p>
+  </noscript>
+  <script src="./logic.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
