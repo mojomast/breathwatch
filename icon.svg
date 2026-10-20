@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Breathwatch">
+  <rect width="512" height="512" rx="96" fill="#12352c"/>
+  <circle cx="256" cy="256" r="148" fill="none" stroke="#8ee0b5" stroke-width="28"/>
+  <path d="M128 280 C168 280 176 180 216 180 C256 180 248 332 296 332 C336 332 344 230 384 230" fill="none" stroke="#e7f6ef" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
